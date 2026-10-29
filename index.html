@@ -124,7 +124,7 @@
             border-color: var(--primary);
         }
 
-        select, input[type="text"] {
+        select, input[type="text"], input[type="password"] {
             width: 100%;
             padding: 12px;
             background-color: #2a2a2a;
@@ -137,7 +137,7 @@
 
         input:disabled {
             background-color: #1a1a1a;
-            color: #666;
+            color: #888;
             border-color: #222;
         }
 
@@ -276,40 +276,6 @@
             display: flex;
             justify-content: space-between;
         }
-
-        .street-manage-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-            margin-top: 8px;
-        }
-
-        .street-tag {
-            background: #333;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 0.85rem;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .street-tag span {
-            color: var(--danger);
-            cursor: pointer;
-            font-weight: bold;
-        }
-
-        .lock-container {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: #2a2a2a;
-            padding: 10px 14px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            border: 1px solid var(--primary);
-        }
     </style>
 </head>
 <body>
@@ -369,46 +335,47 @@
 
     <canvas id="canvas" style="display:none;"></canvas>
 
+    <!-- 設定解鎖密碼 Modal -->
+    <div class="modal" id="authModal">
+        <div class="modal-content" style="max-width: 350px;">
+            <div class="modal-header">
+                <h3>🔐 管理員驗證</h3>
+                <button class="btn-icon" onclick="closeModal('authModal')">✕</button>
+            </div>
+            <p style="font-size: 0.85rem; color: var(--text-sub); margin-bottom: 12px;">修改系統設定需要工程師密碼：</p>
+            <input type="password" id="adminPasswordInput" placeholder="請輸入管理員密碼">
+            <button class="btn-action btn-send" style="margin-top: 15px;" onclick="verifyAdminPassword()">確認解鎖</button>
+        </div>
+    </div>
+
     <!-- 設定 Modal -->
     <div class="modal" id="settingsModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>⚙️ 系統與電郵設定</h3>
+                <h3>⚙️ 系統鎖定設定 (唯讀)</h3>
                 <button class="btn-icon" onclick="closeModal('settingsModal')">✕</button>
             </div>
 
-            <!-- 安全鎖定開關 -->
-            <div class="lock-container">
-                <span style="font-weight: bold; font-size: 0.9rem;">🔒 鎖定設定 (防工友誤觸)</span>
-                <input type="checkbox" id="cfgLockToggle" onchange="toggleLockState(this.checked)" style="width: 20px; height: 20px; cursor: pointer;">
+            <div style="background: rgba(255,152,0,0.1); border: 1px solid var(--primary); padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 0.8rem; color: #ffb74d;">
+                💡 提示：所有電郵與街道已透過系統統一鎖定。工友在任何裝置打開本網頁，都會直接同步使用以下設定。
             </div>
             
             <label style="font-size: 0.85rem; color: var(--text-sub);">公司指定寄件者電郵 (Sender From):</label>
-            <input type="text" id="cfgSenderEmail">
+            <input type="text" id="cfgSenderEmail" disabled>
             
             <label style="font-size: 0.85rem; color: var(--text-sub); margin-top:10px; display:block;">路政署接收電郵 (To):</label>
-            <input type="text" id="cfgHydEmail">
+            <input type="text" id="cfgHydEmail" disabled>
 
             <label style="font-size: 0.85rem; color: var(--text-sub); margin-top:10px; display:block;">工程師副本電郵 (CC):</label>
-            <input type="text" id="cfgEngineerEmail">
-
-            <label style="font-size: 0.85rem; color: var(--text-sub); margin-top:10px; display:block;">巡邏工友姓名/編號:</label>
-            <input type="text" id="cfgWorkerName" placeholder="例: 陳大文 (W-08)">
+            <input type="text" id="cfgEngineerEmail" disabled>
 
             <label style="font-size: 0.85rem; color: var(--text-sub); margin-top:10px; display:block;">後端發信 API (Formspree Endpoint):</label>
-            <input type="text" id="cfgApiEndpoint">
+            <input type="text" id="cfgApiEndpoint" disabled>
 
             <div style="margin-top: 15px;">
-                <label style="font-size: 0.85rem; color: var(--text-sub);">預設街道按鈕管理:</label>
-                <div style="display:flex; gap:6px; margin-top:4px;" id="addStreetGroup">
-                    <input type="text" id="newStreetInput" placeholder="輸入新街道..." style="margin:0;">
-                    <button style="background:var(--primary); border:none; padding:0 12px; border-radius:6px; font-weight:bold; cursor:pointer;" onclick="addPresetStreet()">新增</button>
-                </div>
-                <div class="street-manage-list" id="streetManageList"></div>
+                <label style="font-size: 0.85rem; color: var(--text-sub);">全公司統一預設巡邏街道：</label>
+                <div id="lockedStreetsList" style="margin-top: 6px; font-size: 0.9rem; color: #fff; background: #2a2a2a; padding: 10px; border-radius: 8px;"></div>
             </div>
-
-            <button class="btn-action btn-send" id="saveSettingsBtn" style="margin-top:20px;" onclick="saveSettings()">儲存設定</button>
-            <button class="btn-action btn-reset" style="margin-top:8px; background:#333; font-size:0.85rem;" onclick="resetToSystemDefaults()">重置為系統硬編碼預設值</button>
         </div>
     </div>
 
@@ -416,7 +383,7 @@
     <div class="modal" id="historyModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>📜 巡邏發送歷史紀錄</h3>
+                <h3>📜 本機巡邏發送紀錄</h3>
                 <button class="btn-icon" onclick="closeModal('historyModal')">✕</button>
             </div>
             <ul class="history-list" id="historyList">
@@ -426,14 +393,14 @@
     </div>
 
     <script>
-        // ==================== 🛠️ 工程師核心硬編碼預設值 (Hardcoded Defaults) ====================
-        // 此處資料永遠不會丟失，即使工友清除瀏覽器快取，也會自動載入以下資料！
-        const SYSTEM_DEFAULTS = {
-            senderEmail: "patrol@yourcompany.com.hk",               // 公司指定發送電郵
-            hydEmail: "enquiry@hyd.gov.hk",                          // 路政署接收電郵
-            engineerEmail: "engineer@yourcompany.com.hk",            // 工程師 CC 副本電郵
-            apiEndpoint: "https://formspree.io/f/YOUR_FORMSPREE_ID", // 你的 Formspree 網址
-            streets: ['觀塘道', '太子道東', '龍翔道', '青山公路', '吐露港公路'] // 預設巡邏街道
+        // ==================== 🛠️ 工程師核心統一設定 (在此修改，全網同步) ====================
+        const SYSTEM_CONFIG = {
+            adminPass: "8888",                                       // 工程師解鎖設定的密碼
+            senderEmail: "patrol@yourcompany.com.hk",               // 統一公司寄件電郵
+            hydEmail: "enquiry@hyd.gov.hk",                          // 統一路政署電郵
+            engineerEmail: "engineer@yourcompany.com.hk",            // 統一工程師 CC 電郵
+            apiEndpoint: "https://formspree.io/f/YOUR_FORMSPREE_ID", // 統一 API 網址
+            streets: ['觀塘道', '太子道東', '龍翔道', '青山公路', '吐露港公路', '德輔道中', '軒尼詩道'] // 統一巡邏街道
         };
         // =====================================================================================
 
@@ -442,86 +409,39 @@
         let selectedStreet = '';
         let currentGPS = { lat: null, lng: null, text: '抓取 GPS 中...' };
         let capturedBlob = null;
-        let presetStreets = [];
 
         window.onload = () => {
-            loadSettings();
-            renderStreetButtons();
+            initSystem();
             startCamera();
             startGPSWatch();
             setInterval(updateTimeDisplay, 1000);
         };
 
-        // 載入設定：若無歷史紀錄則強制套用工程師硬編碼預設值
-        function loadSettings() {
-            const savedStreets = localStorage.getItem('patrol_streets');
-            presetStreets = savedStreets ? JSON.parse(savedStreets) : [...SYSTEM_DEFAULTS.streets];
-
-            document.getElementById('cfgSenderEmail').value = localStorage.getItem('cfg_sender_email') || SYSTEM_DEFAULTS.senderEmail;
-            document.getElementById('cfgHydEmail').value = localStorage.getItem('cfg_hyd_email') || SYSTEM_DEFAULTS.hydEmail;
-            document.getElementById('cfgEngineerEmail').value = localStorage.getItem('cfg_eng_email') || SYSTEM_DEFAULTS.engineerEmail;
-            document.getElementById('cfgWorkerName').value = localStorage.getItem('cfg_worker_name') || '';
-            document.getElementById('cfgApiEndpoint').value = localStorage.getItem('cfg_api_endpoint') || SYSTEM_DEFAULTS.apiEndpoint;
-
-            const isLocked = localStorage.getItem('cfg_is_locked') === 'true';
-            document.getElementById('cfgLockToggle').checked = isLocked;
-            toggleLockState(isLocked);
-        }
-
-        // 開啟/關閉鎖定狀態
-        function toggleLockState(isLocked) {
-            localStorage.setItem('cfg_is_locked', isLocked);
-            
-            document.getElementById('cfgSenderEmail').disabled = isLocked;
-            document.getElementById('cfgHydEmail').disabled = isLocked;
-            document.getElementById('cfgEngineerEmail').disabled = isLocked;
-            document.getElementById('cfgApiEndpoint').disabled = isLocked;
-            document.getElementById('addStreetGroup').style.display = isLocked ? 'none' : 'flex';
-            document.getElementById('saveSettingsBtn').style.display = isLocked ? 'none' : 'block';
-
+        // 初始化系統：強制載入統一設定，不依賴個別手機記憶
+        function initSystem() {
             renderStreetButtons();
-        }
 
-        function resetToSystemDefaults() {
-            if (confirm("確定要重置所有設定為工程師系統預設值嗎？")) {
-                localStorage.clear();
-                loadSettings();
-                renderStreetButtons();
-                alert("已重置為預設資料！");
-            }
-        }
+            // 填入設定畫面（唯讀）
+            document.getElementById('cfgSenderEmail').value = SYSTEM_CONFIG.senderEmail;
+            document.getElementById('cfgHydEmail').value = SYSTEM_CONFIG.hydEmail;
+            document.getElementById('cfgEngineerEmail').value = SYSTEM_CONFIG.engineerEmail;
+            document.getElementById('cfgApiEndpoint').value = SYSTEM_CONFIG.apiEndpoint;
 
-        function saveSettings() {
-            localStorage.setItem('cfg_sender_email', document.getElementById('cfgSenderEmail').value.trim());
-            localStorage.setItem('cfg_hyd_email', document.getElementById('cfgHydEmail').value.trim());
-            localStorage.setItem('cfg_eng_email', document.getElementById('cfgEngineerEmail').value.trim());
-            localStorage.setItem('cfg_worker_name', document.getElementById('cfgWorkerName').value.trim());
-            localStorage.setItem('cfg_api_endpoint', document.getElementById('cfgApiEndpoint').value.trim());
-            localStorage.setItem('patrol_streets', JSON.stringify(presetStreets));
-            
-            renderStreetButtons();
-            closeModal('settingsModal');
-            alert('設定已成功儲存！');
+            // 渲染街道列表
+            const streetListDiv = document.getElementById('lockedStreetsList');
+            streetListDiv.innerHTML = SYSTEM_CONFIG.streets.join('、');
         }
 
         function renderStreetButtons() {
             const container = document.getElementById('quickStreetsContainer');
-            const manageList = document.getElementById('streetManageList');
-            const isLocked = document.getElementById('cfgLockToggle').checked;
             container.innerHTML = '';
-            manageList.innerHTML = '';
 
-            presetStreets.forEach(street => {
+            SYSTEM_CONFIG.streets.forEach(street => {
                 const btn = document.createElement('button');
                 btn.className = `btn-street ${selectedStreet === street ? 'active' : ''}`;
                 btn.innerText = street;
                 btn.onclick = () => selectStreet(street);
                 container.appendChild(btn);
-
-                const tag = document.createElement('div');
-                tag.className = 'street-tag';
-                tag.innerHTML = isLocked ? street : `${street} <span onclick="removePresetStreet('${street}')">✕</span>`;
-                manageList.appendChild(tag);
             });
         }
 
@@ -538,22 +458,6 @@
             renderStreetButtons();
             updateWatermarkText();
             validateForm();
-        }
-
-        function addPresetStreet() {
-            const val = document.getElementById('newStreetInput').value.trim();
-            if (val && !presetStreets.includes(val)) {
-                presetStreets.push(val);
-                document.getElementById('newStreetInput').value = '';
-                renderStreetButtons();
-            }
-        }
-
-        function removePresetStreet(street) {
-            presetStreets = presetStreets.filter(s => s !== street);
-            if (selectedStreet === street) selectedStreet = '';
-            renderStreetButtons();
-            updateWatermarkText();
         }
 
         async function startCamera() {
@@ -678,11 +582,11 @@
         }
 
         async function sendReport() {
-            const hydEmail = document.getElementById('cfgHydEmail').value || SYSTEM_DEFAULTS.hydEmail;
-            const engEmail = document.getElementById('cfgEngineerEmail').value || SYSTEM_DEFAULTS.engineerEmail;
-            const senderEmail = document.getElementById('cfgSenderEmail').value || SYSTEM_DEFAULTS.senderEmail;
-            const workerName = document.getElementById('cfgWorkerName').value || '現場工友';
-            const apiEndpoint = document.getElementById('cfgApiEndpoint').value || SYSTEM_DEFAULTS.apiEndpoint;
+            // 直接讀取 SYSTEM_CONFIG 統一常數，確保全裝置發往相同信箱
+            const hydEmail = SYSTEM_CONFIG.hydEmail;
+            const engEmail = SYSTEM_CONFIG.engineerEmail;
+            const senderEmail = SYSTEM_CONFIG.senderEmail;
+            const apiEndpoint = SYSTEM_CONFIG.apiEndpoint;
             const nowTime = getFormattedTime();
 
             const subject = `[巡邏回報] 惡劣天氣街道巡查報告 - ${selectedStreet} - ${nowTime}`;
@@ -693,13 +597,12 @@
                          `巡邏時間：${nowTime}\n` +
                          `現場座標：${currentGPS.text}\n` +
                          `Google Maps: https://maps.google.com/?q=${currentGPS.lat},${currentGPS.lng}\n` +
-                         `回報人員：${workerName}\n` +
                          `發送公司電郵：${senderEmail}\n` +
                          `-----------------------------------\n` +
                          `現場相片已附件於本郵件。`;
 
             if (apiEndpoint && !apiEndpoint.includes("YOUR_FORMSPREE_ID")) {
-                alert('正在透過公司 API 背景自動發送電郵至路政署...');
+                alert('正在透過公司統一 API 背景自動發送電郵至路政署...');
                 const formData = new FormData();
                 formData.append('to', hydEmail);
                 formData.append('cc', engEmail);
@@ -755,7 +658,22 @@
             document.getElementById('historyModal').style.display = 'block';
         }
 
-        function openSettingsModal() { document.getElementById('settingsModal').style.display = 'block'; }
+        // 點擊設定時先跳出密碼驗證
+        function openSettingsModal() {
+            document.getElementById('adminPasswordInput').value = '';
+            document.getElementById('authModal').style.display = 'block';
+        }
+
+        function verifyAdminPassword() {
+            const pwd = document.getElementById('adminPasswordInput').value;
+            if (pwd === SYSTEM_CONFIG.adminPass) {
+                closeModal('authModal');
+                document.getElementById('settingsModal').style.display = 'block';
+            } else {
+                alert('❌ 密碼錯誤！只有工程師才能檢視系統設定。');
+            }
+        }
+
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
     </script>
 </body>
