@@ -357,7 +357,7 @@
 
     <canvas id="canvas" style="display:none;"></canvas>
 
-    <!-- 傳送中轉圈圈遮罩 -->
+    <!-- 傳送中遮罩 -->
     <div id="loadingOverlay">
         <div class="spinner"></div>
         <div>正在發送巡邏報告與相片...</div>
@@ -385,7 +385,7 @@
             </div>
 
             <div style="background: rgba(255,152,0,0.1); border: 1px solid var(--primary); padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 0.80rem; color: #ffb74d;">
-                💡 提示：所有收件人、副本與街道已統一鎖定，系統配備自動備援發送機制。
+                💡 提示：所有收件人、副本與街道已統一鎖定。
             </div>
             
             <label style="font-size: 0.85rem; color: var(--text-sub);">寄件者電郵 (Sender):</label>
@@ -590,7 +590,6 @@
             ctx.font = '14px Arial';
             ctx.fillText('時間: ' + getFormattedTime() + '  |  GPS: ' + currentGPS.text, 15, canvas.height - 20);
 
-            // 使用適當壓縮比確保相片品質與傳輸成功率
             canvas.toBlob(function(blob) {
                 capturedBlob = blob;
                 var imgUrl = URL.createObjectURL(blob);
@@ -637,7 +636,6 @@
             }
         }
 
-        // 發送邏輯：優先使用背景 API，若失敗則自動平滑切換至 Mailto 備援
         async function sendReport() {
             if (!capturedBlob) {
                 alert('請先拍照！');
@@ -650,9 +648,9 @@
             var dateCompact = getFormattedDateCompact();
             var subject = selectedStreet + ' - Amber Pothole Gang Photo (Central) ' + dateCompact;
             
+            // Email 內文格式：已移除 GPS 座標資料，純潔乾淨
             var body = 'Dear Sir,\n\n' +
                        'FYI.\n\n' +
-                       'GPS 座標參考: ' + currentGPS.text + ' (Maps: https://maps.google.com/?q=' + currentGPS.lat + ',' + currentGPS.lng + ')\n\n' +
                        'Best Regards,\n\n' +
                        SYSTEM_CONFIG.senderName + '\n' +
                        SYSTEM_CONFIG.senderTitle + '\n' +
@@ -676,7 +674,7 @@
                 if (loadingOverlay) loadingOverlay.style.display = 'none';
 
                 if (result.success) {
-                    alert('✅ 巡邏報告與照片已成功自動發送！');
+                    alert('✅ 巡邏報告與相片已成功自動發送！');
                     saveHistory(selectedStreet, getFormattedTime(), '背景 API 發送成功');
                     resetCamera();
                 } else {
@@ -684,16 +682,12 @@
                 }
             } catch (err) {
                 if (loadingOverlay) loadingOverlay.style.display = 'none';
-                console.warn('API 傳送失敗，自動啟用郵件 App 備援方案：', err);
-                
-                // 自動開啟郵件 App 備援
+                console.warn('API 傳送失敗，切換至備援模式：', err);
                 fallbackToMailto(subject, body);
             }
         }
 
-        // 備援切換函數：自動喚起手機郵件 App 並存下相片提示工友
         function fallbackToMailto(subject, body) {
-            // 自動儲存相片到手機
             if (capturedBlob) {
                 var url = URL.createObjectURL(capturedBlob);
                 var a = document.createElement('a');
@@ -710,10 +704,10 @@
                             '&body=' + encodeURIComponent(body);
             
             window.location.href = mailtoUrl;
-            saveHistory(selectedStreet, getFormattedTime(), '已下載相片並切換郵件App');
+            saveHistory(selectedStreet, getFormattedTime(), '已下載相片並開啟郵件App');
             
             setTimeout(function() {
-                alert('💡 提示：相片已自動下載至您的裝置中！\n\n系統已為您開啟郵件 App，請點擊【附加檔案 (📎)】選取剛剛下載的巡邏照片即可發送！');
+                alert('💡 提示：相片已自動下載至您的裝置中！\n\n請在開啟的郵件 App 中點擊【附加檔案 (📎)】選取剛剛下載的照片即可發送。');
                 resetCamera();
             }, 1000);
         }
