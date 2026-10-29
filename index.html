@@ -357,7 +357,7 @@
             </div>
 
             <div style="background: rgba(255,152,0,0.1); border: 1px solid var(--primary); padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 0.80rem; color: #ffb74d;">
-                💡 提示：收件人、副本與街道已統一鎖定。系統採用一鍵調用郵件 App 確保照片與信件 100% 準確送達。
+                💡 提示：收件人、副本與街道已統一鎖定。
             </div>
             
             <label style="font-size: 0.85rem; color: var(--text-sub);">寄件者電郵 (Sender):</label>
@@ -390,62 +390,67 @@
     </div>
 
     <script>
-        // ==================== 🛠️ 電郵與街道規格鎖定 ====================
-        const SYSTEM_CONFIG = {
+        var SYSTEM_CONFIG = {
             adminPass: "8888",
             senderEmail: "zenith@14hy2024-crbcfd.com",
-            hydEmail: "plng@14hy2024-crbcfd.com",
-            engineerEmail: "wkko@14hy2024-crbcfd.com",
+            hydEmail: "plng@14hy2024-crbcfd.com; miowc1.u@hyd.gov.hk; miowc2.u@hyd.gov.hk; miowc3.u@hyd.gov.hk; maiowc2.u@hyd.gov.hk; mwsic2.u@hyd.gov.hk; mwsiic1.u@hyd.gov.hk; mwsiic2.u@hyd.gov.hk; mwsiic4.u@hyd.gov.hk; mwsic1.u@hyd.gov.hk",
+            engineerEmail: "wkko@14hy2024-crbcfd.com; spwan@14hy2024-crbcfd.com",
             streets: [
-                'Location 4 - 紅棉路 14HY2024',
-                'Location 5 - 花園道 14HY2024',
-                '太子道東',
-                '龍翔道',
-                '青山公路',
-                '吐露港公路'
+                "Location 4 - 紅棉路 14HY2024",
+                "Location 5 - 花園道 14HY2024",
+                "太子道東",
+                "龍翔道",
+                "青山公路",
+                "吐露港公路"
             ],
             senderName: "Desmond Ng",
             senderTitle: "CRBC-FD JV",
             senderTel: "5167 9235"
         };
-        // ====================================================================
 
-        let currentStream = null;
-        let facingMode = 'environment';
-        let selectedStreet = '';
-        let currentGPS = { lat: null, lng: null, text: '抓取 GPS 中...' };
-        let capturedBlob = null;
+        var currentStream = null;
+        var facingMode = 'environment';
+        var selectedStreet = '';
+        var currentGPS = { lat: null, lng: null, text: '抓取 GPS 中...' };
+        var capturedBlob = null;
 
-        window.onload = () => {
+        window.addEventListener('DOMContentLoaded', function() {
             initSystem();
             startCamera();
             startGPSWatch();
             setInterval(updateTimeDisplay, 1000);
-        };
+        });
 
         function initSystem() {
             renderStreetButtons();
-            document.getElementById('cfgSenderEmail').value = SYSTEM_CONFIG.senderEmail;
-            document.getElementById('cfgHydEmail').value = SYSTEM_CONFIG.hydEmail;
-            document.getElementById('cfgEngineerEmail').value = SYSTEM_CONFIG.engineerEmail;
-            document.getElementById('lockedStreetsList').innerHTML = SYSTEM_CONFIG.streets.join('<br>');
+            var elSender = document.getElementById('cfgSenderEmail');
+            var elHyd = document.getElementById('cfgHydEmail');
+            var elEng = document.getElementById('cfgEngineerEmail');
+            var elStreets = document.getElementById('lockedStreetsList');
+
+            if (elSender) elSender.value = SYSTEM_CONFIG.senderEmail;
+            if (elHyd) elHyd.value = SYSTEM_CONFIG.hydEmail;
+            if (elEng) elEng.value = SYSTEM_CONFIG.engineerEmail;
+            if (elStreets) elStreets.innerHTML = SYSTEM_CONFIG.streets.join('<br>');
         }
 
         function renderStreetButtons() {
-            const container = document.getElementById('quickStreetsContainer');
+            var container = document.getElementById('quickStreetsContainer');
+            if (!container) return;
             container.innerHTML = '';
-            SYSTEM_CONFIG.streets.forEach(street => {
-                const btn = document.createElement('button');
-                btn.className = `btn-street ${selectedStreet === street ? 'active' : ''}`;
+            SYSTEM_CONFIG.streets.forEach(function(street) {
+                var btn = document.createElement('button');
+                btn.className = 'btn-street' + (selectedStreet === street ? ' active' : '');
                 btn.innerText = street;
-                btn.onclick = () => selectStreet(street);
+                btn.onclick = function() { selectStreet(street); };
                 container.appendChild(btn);
             });
         }
 
         function selectStreet(street) {
             selectedStreet = street;
-            document.getElementById('customStreet').value = '';
+            var customEl = document.getElementById('customStreet');
+            if (customEl) customEl.value = '';
             renderStreetButtons();
             updateWatermarkText();
             validateForm();
@@ -458,16 +463,20 @@
             validateForm();
         }
 
-        async function startCamera() {
+        function startCamera() {
             if (currentStream) {
-                currentStream.getTracks().forEach(track => track.stop());
+                currentStream.getTracks().forEach(function(track) { track.stop(); });
             }
-            try {
-                const constraints = { video: { facingMode: facingMode } };
-                currentStream = await navigator.mediaDevices.getUserMedia(constraints);
-                document.getElementById('webcam').srcObject = currentStream;
-            } catch (err) {
-                alert('無法讀取相機，請確保已授權相機存取權限。');
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                navigator.mediaDevices.getUserMedia({ video: { facingMode: facingMode } })
+                .then(function(stream) {
+                    currentStream = stream;
+                    var video = document.getElementById('webcam');
+                    if (video) video.srcObject = stream;
+                })
+                .catch(function(err) {
+                    alert('無法讀取相機，請確保已授權相機存取權限。');
+                });
             }
         }
 
@@ -479,13 +488,13 @@
         function startGPSWatch() {
             if ('geolocation' in navigator) {
                 navigator.geolocation.watchPosition(
-                    (pos) => {
+                    function(pos) {
                         currentGPS.lat = pos.coords.latitude.toFixed(5);
                         currentGPS.lng = pos.coords.longitude.toFixed(5);
-                        currentGPS.text = `${currentGPS.lat}, ${currentGPS.lng}`;
+                        currentGPS.text = currentGPS.lat + ', ' + currentGPS.lng;
                         updateWatermarkText();
                     },
-                    (err) => {
+                    function(err) {
                         currentGPS.text = 'GPS 定位失敗';
                         updateWatermarkText();
                     },
@@ -498,14 +507,14 @@
         }
 
         function getFormattedDateCompact() {
-            const now = new Date();
+            var now = new Date();
             return now.getFullYear().toString() +
                    String(now.getMonth() + 1).padStart(2, '0') +
                    String(now.getDate()).padStart(2, '0');
         }
 
         function getFormattedTime() {
-            const now = new Date();
+            var now = new Date();
             return now.getFullYear() + '-' +
                    String(now.getMonth() + 1).padStart(2, '0') + '-' +
                    String(now.getDate()).padStart(2, '0') + ' ' +
@@ -516,10 +525,12 @@
         function updateTimeDisplay() { updateWatermarkText(); }
 
         function updateWatermarkText() {
-            const streetText = selectedStreet || '請先選擇街道';
-            const timeText = getFormattedTime();
-            document.getElementById('watermarkPreview').innerHTML = 
-                `📍 位置: ${currentGPS.text}<br>🕒 時間: ${timeText}<br>🛣️ 街道: ${streetText}`;
+            var streetText = selectedStreet || '請先選擇街道';
+            var timeText = getFormattedTime();
+            var elPreview = document.getElementById('watermarkPreview');
+            if (elPreview) {
+                elPreview.innerHTML = '📍 位置: ' + currentGPS.text + '<br>🕒 時間: ' + timeText + '<br>🛣️ 街道: ' + streetText;
+            }
         }
 
         function takePhoto() {
@@ -528,53 +539,65 @@
                 return;
             }
 
-            const video = document.getElementById('webcam');
-            const canvas = document.getElementById('canvas');
-            const ctx = canvas.getContext('2d');
+            var video = document.getElementById('webcam');
+            var canvas = document.getElementById('canvas');
+            if (!video || !canvas) return;
+            var ctx = canvas.getContext('2d');
 
             canvas.width = video.videoWidth || 640;
             canvas.height = video.videoHeight || 480;
 
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-            const bannerHeight = 80;
+            var bannerHeight = 80;
             ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
             ctx.fillRect(0, canvas.height - bannerHeight, canvas.width, bannerHeight);
 
             ctx.fillStyle = '#ffffff';
             ctx.font = 'bold 16px Arial';
-            ctx.fillText(`位置: ${selectedStreet}`, 15, canvas.height - 50);
+            ctx.fillText('位置: ' + selectedStreet, 15, canvas.height - 50);
             
             ctx.fillStyle = '#ff9800';
             ctx.font = '14px Arial';
-            ctx.fillText(`時間: ${getFormattedTime()}  |  GPS: ${currentGPS.text}`, 15, canvas.height - 20);
+            ctx.fillText('時間: ' + getFormattedTime() + '  |  GPS: ' + currentGPS.text, 15, canvas.height - 20);
 
-            canvas.toBlob((blob) => {
+            canvas.toBlob(function(blob) {
                 capturedBlob = blob;
-                const imgUrl = URL.createObjectURL(blob);
-                const imgElem = document.getElementById('capturedImage');
-                imgElem.src = imgUrl;
-                imgElem.style.display = 'block';
+                var imgUrl = URL.createObjectURL(blob);
+                var imgElem = document.getElementById('capturedImage');
+                if (imgElem) {
+                    imgElem.src = imgUrl;
+                    imgElem.style.display = 'block';
+                }
                 video.style.display = 'none';
 
-                document.getElementById('snapBtn').style.display = 'none';
-                document.getElementById('retakeBtn').style.display = 'block';
+                var snapBtn = document.getElementById('snapBtn');
+                var retakeBtn = document.getElementById('retakeBtn');
+                if (snapBtn) snapBtn.style.display = 'none';
+                if (retakeBtn) retakeBtn.style.display = 'block';
                 
                 validateForm();
             }, 'image/jpeg', 0.85);
         }
 
         function resetCamera() {
-            document.getElementById('capturedImage'].style.display = 'none';
-            document.getElementById('webcam').style.display = 'block';
-            document.getElementById('snapBtn').style.display = 'flex';
-            document.getElementById('retakeBtn').style.display = 'none';
+            var imgElem = document.getElementById('capturedImage');
+            var video = document.getElementById('webcam');
+            var snapBtn = document.getElementById('snapBtn');
+            var retakeBtn = document.getElementById('retakeBtn');
+
+            if (imgElem) imgElem.style.display = 'none';
+            if (video) video.style.display = 'block';
+            if (snapBtn) snapBtn.style.display = 'flex';
+            if (retakeBtn) retakeBtn.style.display = 'none';
+            
             capturedBlob = null;
             validateForm();
         }
 
         function validateForm() {
-            const sendBtn = document.getElementById('sendBtn');
+            var sendBtn = document.getElementById('sendBtn');
+            if (!sendBtn) return;
             if (selectedStreet && capturedBlob) {
                 sendBtn.disabled = false;
                 sendBtn.style.opacity = '1';
@@ -584,62 +607,65 @@
             }
         }
 
-        // 直接喚起手機內建電郵 App，帶入完整收件人、CC、主旨與內文
         function sendReport() {
-            const dateCompact = getFormattedDateCompact();
-            const subject = `${selectedStreet} - Amber Pothole Gang Photo (Central) ${dateCompact}`;
+            var dateCompact = getFormattedDateCompact();
+            var subject = selectedStreet + ' - Amber Pothole Gang Photo (Central) ' + dateCompact;
             
-            const body = `Dear Sir,\n\n` +
-                         `FYI.\n\n` +
-                         `GPS 座標參考: ${currentGPS.text} (Maps: https://maps.google.com/?q=${currentGPS.lat},${currentGPS.lng})\n\n` +
-                         `Best Regards,\n\n` +
-                         `${SYSTEM_CONFIG.senderName}\n` +
-                         `${SYSTEM_CONFIG.senderTitle}\n` +
-                         `Tel: ${SYSTEM_CONFIG.senderTel}`;
+            var body = 'Dear Sir,\n\n' +
+                       'FYI.\n\n' +
+                       'GPS 座標參考: ' + currentGPS.text + ' (Maps: https://maps.google.com/?q=' + currentGPS.lat + ',' + currentGPS.lng + ')\n\n' +
+                       'Best Regards,\n\n' +
+                       SYSTEM_CONFIG.senderName + '\n' +
+                       SYSTEM_CONFIG.senderTitle + '\n' +
+                       'Tel: ' + SYSTEM_CONFIG.senderTel;
 
-            const mailtoUrl = `mailto:${encodeURIComponent(SYSTEM_CONFIG.hydEmail)}?cc=${encodeURIComponent(SYSTEM_CONFIG.engineerEmail)}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+            var mailtoUrl = 'mailto:' + encodeURIComponent(SYSTEM_CONFIG.hydEmail) + 
+                            '?cc=' + encodeURIComponent(SYSTEM_CONFIG.engineerEmail) + 
+                            '&subject=' + encodeURIComponent(subject) + 
+                            '&body=' + encodeURIComponent(body);
             
             window.location.href = mailtoUrl;
             saveHistory(selectedStreet, getFormattedTime(), '已成功調用郵件 App');
             
-            // 提示工友記得附加剛拍的照片
-            setTimeout(() => {
+            setTimeout(function() {
                 alert('💡 提示：請在開啟的郵件 App 中，將剛才拍好的巡邏相片「附加」到信件中即可發送！');
                 resetCamera();
             }, 1000);
         }
 
         function saveHistory(street, time, status) {
-            let history = JSON.parse(localStorage.getItem('patrol_history') || '[]');
-            history.unshift({ street, time, status });
+            var history = JSON.parse(localStorage.getItem('patrol_history') || '[]');
+            history.unshift({ street: street, time: time, status: status });
             if (history.length > 20) history.pop();
             localStorage.setItem('patrol_history', JSON.stringify(history));
         }
 
         function openHistoryModal() {
-            const list = document.getElementById('historyList');
-            const history = JSON.parse(localStorage.getItem('patrol_history') || '[]');
+            var list = document.getElementById('historyList');
+            var history = JSON.parse(localStorage.getItem('patrol_history') || '[]');
+            if (!list) return;
             if (history.length === 0) {
                 list.innerHTML = '<li class="history-item">暫無歷史紀錄</li>';
             } else {
-                list.innerHTML = history.map(h => 
-                    `<li class="history-item">
-                        <div><strong>${h.street}</strong><br><span style="color:#888;">${h.time}</span></div>
-                        <div style="color:var(--primary);">${h.status}</div>
-                    </li>`
-                ).join('');
+                list.innerHTML = history.map(function(h) {
+                    return '<li class="history-item">' +
+                           '<div><strong>' + h.street + '</strong><br><span style="color:#888;">' + h.time + '</span></div>' +
+                           '<div style="color:var(--primary);">' + h.status + '</div>' +
+                           '</li>';
+                }).join('');
             }
             document.getElementById('historyModal').style.display = 'block';
         }
 
         function openSettingsModal() {
-            document.getElementById('adminPasswordInput').value = '';
+            var pwdInput = document.getElementById('adminPasswordInput');
+            if (pwdInput) pwdInput.value = '';
             document.getElementById('authModal').style.display = 'block';
         }
 
         function verifyAdminPassword() {
-            const pwd = document.getElementById('adminPasswordInput').value;
-            if (pwd === SYSTEM_CONFIG.adminPass) {
+            var pwdInput = document.getElementById('adminPasswordInput');
+            if (pwdInput && pwdInput.value === SYSTEM_CONFIG.adminPass) {
                 closeModal('authModal');
                 document.getElementById('settingsModal').style.display = 'block';
             } else {
@@ -647,7 +673,10 @@
             }
         }
 
-        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+        function closeModal(id) {
+            var el = document.getElementById(id);
+            if (el) el.style.display = 'none';
+        }
     </script>
 </body>
 </html>
