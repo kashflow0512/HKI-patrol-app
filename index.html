@@ -98,7 +98,7 @@
 
         .quick-streets {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
             gap: 8px;
             margin-bottom: 10px;
         }
@@ -107,9 +107,9 @@
             background-color: #2c2c2e;
             color: #fff;
             border: 1px solid #444;
-            padding: 10px 6px;
+            padding: 10px 8px;
             border-radius: 8px;
-            font-size: 0.95rem;
+            font-size: 0.85rem;
             font-weight: bold;
             cursor: pointer;
             text-align: center;
@@ -281,7 +281,7 @@
 <body>
 
     <header>
-        <h1>🌧️ 香港街道巡邏自動回報</h1>
+        <h1>🌧️ 香港道路維修緊急巡邏與自動回報</h1>
         <div class="header-btns">
             <button class="btn-icon" onclick="openHistoryModal()">📜</button>
             <button class="btn-icon" onclick="openSettingsModal()">⚙️</button>
@@ -293,10 +293,10 @@
         <!-- 街道選擇區 -->
         <div class="card">
             <div class="section-title">
-                <span>選擇巡邏街道</span>
+                <span>選擇巡邏位置與街道</span>
             </div>
             <div class="quick-streets" id="quickStreetsContainer"></div>
-            <input type="text" id="customStreet" placeholder="或手動輸入其他街道名稱..." oninput="onCustomStreetInput(this.value)">
+            <input type="text" id="customStreet" placeholder="或手動輸入其他位置/街道名稱..." oninput="onCustomStreetInput(this.value)">
         </div>
 
         <!-- 相機拍照區 -->
@@ -357,23 +357,23 @@
             </div>
 
             <div style="background: rgba(255,152,0,0.1); border: 1px solid var(--primary); padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 0.8rem; color: #ffb74d;">
-                💡 提示：所有電郵與街道已透過系統統一鎖定。工友在任何裝置打開本網頁，都會直接同步使用以下設定。
+                💡 提示：所有寄件者、收件人與街道已透過系統統一鎖定。
             </div>
             
-            <label style="font-size: 0.85rem; color: var(--text-sub);">公司指定寄件者電郵 (Sender From):</label>
+            <label style="font-size: 0.85rem; color: var(--text-sub);">寄件者電郵 (Sender):</label>
             <input type="text" id="cfgSenderEmail" disabled>
-            
-            <label style="font-size: 0.85rem; color: var(--text-sub); margin-top:10px; display:block;">路政署接收電郵 (To):</label>
+
+            <label style="font-size: 0.85rem; color: var(--text-sub); margin-top:10px; display:block;">接收電郵 (To):</label>
             <input type="text" id="cfgHydEmail" disabled>
 
-            <label style="font-size: 0.85rem; color: var(--text-sub); margin-top:10px; display:block;">工程師副本電郵 (CC):</label>
+            <label style="font-size: 0.85rem; color: var(--text-sub); margin-top:10px; display:block;">副本電郵 (CC):</label>
             <input type="text" id="cfgEngineerEmail" disabled>
 
-            <label style="font-size: 0.85rem; color: var(--text-sub); margin-top:10px; display:block;">後端發信 API (Formspree Endpoint):</label>
+            <label style="font-size: 0.85rem; color: var(--text-sub); margin-top:10px; display:block;">API Endpoint:</label>
             <input type="text" id="cfgApiEndpoint" disabled>
 
             <div style="margin-top: 15px;">
-                <label style="font-size: 0.85rem; color: var(--text-sub);">全公司統一預設巡邏街道：</label>
+                <label style="font-size: 0.85rem; color: var(--text-sub);">統一巡邏街道：</label>
                 <div id="lockedStreetsList" style="margin-top: 6px; font-size: 0.9rem; color: #fff; background: #2a2a2a; padding: 10px; border-radius: 8px;"></div>
             </div>
         </div>
@@ -393,16 +393,26 @@
     </div>
 
     <script>
-        // ==================== 🛠️ 工程師核心統一設定 (在此修改，全網同步) ====================
+        // ==================== 🛠️ 最新指定的完整電郵與街道規格 ====================
         const SYSTEM_CONFIG = {
-            adminPass: "8888",                                       // 工程師解鎖設定的密碼
-            senderEmail: "patrol@yourcompany.com.hk",               // 統一公司寄件電郵
-            hydEmail: "enquiry@hyd.gov.hk",                          // 統一路政署電郵
-            engineerEmail: "engineer@yourcompany.com.hk",            // 統一工程師 CC 電郵
-            apiEndpoint: "https://formspree.io/f/mgaazwjz", // 統一 API 網址
-            streets: ['觀塘道', '太子道東', '龍翔道', '青山公路', '吐露港公路', '德輔道中', '軒尼詩道'] // 統一巡邏街道
+            adminPass: "8888",
+            senderEmail: "zenith@14hy2024-crbcfd.com",
+            hydEmail: "plng@14hy2024-crbcfd.com; miowc1.u@hyd.gov.hk; miowc2.u@hyd.gov.hk; miowc3.u@hyd.gov.hk; maiowc2.u@hyd.gov.hk; mwsic2.u@hyd.gov.hk; mwsiic1.u@hyd.gov.hk; mwsiic2.u@hyd.gov.hk; mwsiic4.u@hyd.gov.hk; mwsic1.u@hyd.gov.hk",
+            engineerEmail: "wkko@14hy2024-crbcfd.com; spwan@14hy2024-crbcfd.com",
+            apiEndpoint: "https://formspree.io/f/mgaazwjz", // ⬅️ 你的 Formspree 網址
+            streets: [
+                'Location 4 - 紅棉路 14HY2024',
+                'Location 5 - 花園道 14HY2024',
+                '太子道東',
+                '龍翔道',
+                '青山公路',
+                '吐露港公路'
+            ],
+            senderName: "Desmond Ng",
+            senderTitle: "CRBC-FD JV",
+            senderTel: "5167 9235"
         };
-        // =====================================================================================
+        // ====================================================================
 
         let currentStream = null;
         let facingMode = 'environment';
@@ -417,25 +427,18 @@
             setInterval(updateTimeDisplay, 1000);
         };
 
-        // 初始化系統：強制載入統一設定，不依賴個別手機記憶
         function initSystem() {
             renderStreetButtons();
-
-            // 填入設定畫面（唯讀）
             document.getElementById('cfgSenderEmail').value = SYSTEM_CONFIG.senderEmail;
             document.getElementById('cfgHydEmail').value = SYSTEM_CONFIG.hydEmail;
             document.getElementById('cfgEngineerEmail').value = SYSTEM_CONFIG.engineerEmail;
             document.getElementById('cfgApiEndpoint').value = SYSTEM_CONFIG.apiEndpoint;
-
-            // 渲染街道列表
-            const streetListDiv = document.getElementById('lockedStreetsList');
-            streetListDiv.innerHTML = SYSTEM_CONFIG.streets.join('、');
+            document.getElementById('lockedStreetsList').innerHTML = SYSTEM_CONFIG.streets.join('<br>');
         }
 
         function renderStreetButtons() {
             const container = document.getElementById('quickStreetsContainer');
             container.innerHTML = '';
-
             SYSTEM_CONFIG.streets.forEach(street => {
                 const btn = document.createElement('button');
                 btn.className = `btn-street ${selectedStreet === street ? 'active' : ''}`;
@@ -499,14 +502,20 @@
             }
         }
 
+        function getFormattedDateCompact() {
+            const now = new Date();
+            return now.getFullYear().toString() +
+                   String(now.getMonth() + 1).padStart(2, '0') +
+                   String(now.getDate()).padStart(2, '0');
+        }
+
         function getFormattedTime() {
             const now = new Date();
             return now.getFullYear() + '-' +
                    String(now.getMonth() + 1).padStart(2, '0') + '-' +
                    String(now.getDate()).padStart(2, '0') + ' ' +
                    String(now.getHours()).padStart(2, '0') + ':' +
-                   String(now.getMinutes()).padStart(2, '0') + ':' +
-                   String(now.getSeconds()).padStart(2, '0');
+                   String(now.getMinutes()).padStart(2, '0');
         }
 
         function updateTimeDisplay() { updateWatermarkText(); }
@@ -520,7 +529,7 @@
 
         function takePhoto() {
             if (!selectedStreet) {
-                alert('請先點選巡邏街道名稱！');
+                alert('請先點選巡邏位置或街道名稱！');
                 return;
             }
 
@@ -538,13 +547,12 @@
             ctx.fillRect(0, canvas.height - bannerHeight, canvas.width, bannerHeight);
 
             ctx.fillStyle = '#ffffff';
-            ctx.font = 'bold 18px Arial';
-            ctx.fillText(`街道: ${selectedStreet}`, 15, canvas.height - 50);
+            ctx.font = 'bold 16px Arial';
+            ctx.fillText(`位置: ${selectedStreet}`, 15, canvas.height - 50);
             
             ctx.fillStyle = '#ff9800';
             ctx.font = '14px Arial';
-            const timeStr = getFormattedTime();
-            ctx.fillText(`時間: ${timeStr}  |  GPS: ${currentGPS.text}`, 15, canvas.height - 20);
+            ctx.fillText(`時間: ${getFormattedTime()}  |  GPS: ${currentGPS.text}`, 15, canvas.height - 20);
 
             canvas.toBlob((blob) => {
                 capturedBlob = blob;
@@ -582,57 +590,53 @@
         }
 
         async function sendReport() {
-            // 直接讀取 SYSTEM_CONFIG 統一常數，確保全裝置發往相同信箱
-            const hydEmail = SYSTEM_CONFIG.hydEmail;
-            const engEmail = SYSTEM_CONFIG.engineerEmail;
-            const senderEmail = SYSTEM_CONFIG.senderEmail;
-            const apiEndpoint = SYSTEM_CONFIG.apiEndpoint;
-            const nowTime = getFormattedTime();
+            const dateCompact = getFormattedDateCompact();
+            // 主旨格式： Location 4 - 紅棉路 14HY2024 - Amber Pothole Gang Photo (Central) 20261003
+            const subject = `${selectedStreet} - Amber Pothole Gang Photo (Central) ${dateCompact}`;
+            
+            // 內文格式
+            const body = `Dear Sir,\n\n` +
+                         `FYI.\n\n` +
+                         `GPS 座標參考: ${currentGPS.text} (Maps: https://maps.google.com/?q=${currentGPS.lat},${currentGPS.lng})\n\n` +
+                         `Best Regards,\n\n` +
+                         `${SYSTEM_CONFIG.senderName}\n` +
+                         `${SYSTEM_CONFIG.senderTitle}\n` +
+                         `Tel: ${SYSTEM_CONFIG.senderTel}`;
 
-            const subject = `[巡邏回報] 惡劣天氣街道巡查報告 - ${selectedStreet} - ${nowTime}`;
-            const body = `路政署 執照及巡邏組：\n\n` +
-                         `這是最新的緊急街道巡邏拍照報告：\n` +
-                         `-----------------------------------\n` +
-                         `巡邏街道：${selectedStreet}\n` +
-                         `巡邏時間：${nowTime}\n` +
-                         `現場座標：${currentGPS.text}\n` +
-                         `Google Maps: https://maps.google.com/?q=${currentGPS.lat},${currentGPS.lng}\n` +
-                         `發送公司電郵：${senderEmail}\n` +
-                         `-----------------------------------\n` +
-                         `現場相片已附件於本郵件。`;
+            const apiEndpoint = SYSTEM_CONFIG.apiEndpoint;
 
             if (apiEndpoint && !apiEndpoint.includes("YOUR_FORMSPREE_ID")) {
-                alert('正在透過公司統一 API 背景自動發送電郵至路政署...');
+                alert('正在透過 API 背景發送巡邏報告...');
                 const formData = new FormData();
-                formData.append('to', hydEmail);
-                formData.append('cc', engEmail);
-                formData.append('from', senderEmail);
+                formData.append('from', SYSTEM_CONFIG.senderEmail);
+                formData.append('to', SYSTEM_CONFIG.hydEmail);
+                formData.append('cc', SYSTEM_CONFIG.engineerEmail);
                 formData.append('subject', subject);
                 formData.append('message', body);
-                formData.append('photo', capturedBlob, `patrol_${selectedStreet}_${Date.now()}.jpg`);
+                formData.append('photo', capturedBlob, `patrol_${Date.now()}.jpg`);
 
                 try {
                     const response = await fetch(apiEndpoint, { method: 'POST', body: formData, headers: { 'Accept': 'application/json' } });
                     if (response.ok) {
-                        alert('✅ 發送成功！路政署及工程師已收到報告。');
-                        saveHistory(selectedStreet, nowTime, 'API 自動發送成功');
+                        alert('✅ 發送成功！所有收件人已收到報告。');
+                        saveHistory(selectedStreet, getFormattedTime(), 'API 發送成功');
                         resetCamera();
                     } else {
                         throw new Error('API 回應異常');
                     }
                 } catch (e) {
-                    alert('❌ API 背景發送失敗，將切換至調用手機 Mail 軟體發送。');
-                    fallbackToMailto(hydEmail, engEmail, subject, body);
+                    alert('❌ API 發送失敗，將切換至手機 Email 軟體發送。');
+                    fallbackToMailto(subject, body);
                 }
             } else {
-                fallbackToMailto(hydEmail, engEmail, subject, body);
+                fallbackToMailto(subject, body);
             }
         }
 
-        function fallbackToMailto(to, cc, subject, body) {
-            const mailtoUrl = `mailto:${encodeURIComponent(to)}?cc=${encodeURIComponent(cc)}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        function fallbackToMailto(subject, body) {
+            const mailtoUrl = `mailto:${encodeURIComponent(SYSTEM_CONFIG.hydEmail)}?cc=${encodeURIComponent(SYSTEM_CONFIG.engineerEmail)}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
             window.location.href = mailtoUrl;
-            saveHistory(selectedStreet, getFormattedTime(), '已喚起 Email App');
+            saveHistory(selectedStreet, getFormattedTime(), '已切換至 Email App');
         }
 
         function saveHistory(street, time, status) {
@@ -658,7 +662,6 @@
             document.getElementById('historyModal').style.display = 'block';
         }
 
-        // 點擊設定時先跳出密碼驗證
         function openSettingsModal() {
             document.getElementById('adminPasswordInput').value = '';
             document.getElementById('authModal').style.display = 'block';
@@ -670,7 +673,7 @@
                 closeModal('authModal');
                 document.getElementById('settingsModal').style.display = 'block';
             } else {
-                alert('❌ 密碼錯誤！只有工程師才能檢視系統設定。');
+                alert('❌ 密碼錯誤！');
             }
         }
 
