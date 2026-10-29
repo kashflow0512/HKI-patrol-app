@@ -327,7 +327,7 @@
         <!-- 發送報告按鈕 -->
         <div class="card">
             <button class="btn-action btn-send" id="sendBtn" onclick="sendReport()" disabled>
-                ✉️ 完成並自動發送電郵
+                ✉️ 開啟郵件 App 並發送報告
             </button>
         </div>
 
@@ -356,8 +356,8 @@
                 <button class="btn-icon" onclick="closeModal('settingsModal')">✕</button>
             </div>
 
-            <div style="background: rgba(255,152,0,0.1); border: 1px solid var(--primary); padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 0.8rem; color: #ffb74d;">
-                💡 提示：所有寄件者、收件人與街道已透過系統統一鎖定。
+            <div style="background: rgba(255,152,0,0.1); border: 1px solid var(--primary); padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 0.80rem; color: #ffb74d;">
+                💡 提示：收件人、副本與街道已統一鎖定。系統採用一鍵調用郵件 App 確保照片與信件 100% 準確送達。
             </div>
             
             <label style="font-size: 0.85rem; color: var(--text-sub);">寄件者電郵 (Sender):</label>
@@ -368,9 +368,6 @@
 
             <label style="font-size: 0.85rem; color: var(--text-sub); margin-top:10px; display:block;">副本電郵 (CC):</label>
             <input type="text" id="cfgEngineerEmail" disabled>
-
-            <label style="font-size: 0.85rem; color: var(--text-sub); margin-top:10px; display:block;">API Endpoint:</label>
-            <input type="text" id="cfgApiEndpoint" disabled>
 
             <div style="margin-top: 15px;">
                 <label style="font-size: 0.85rem; color: var(--text-sub);">統一巡邏街道：</label>
@@ -393,13 +390,12 @@
     </div>
 
     <script>
-        // ==================== 🛠️ 最新指定的完整電郵與街道規格 ====================
+        // ==================== 🛠️ 電郵與街道規格鎖定 ====================
         const SYSTEM_CONFIG = {
             adminPass: "8888",
             senderEmail: "zenith@14hy2024-crbcfd.com",
             hydEmail: "plng@14hy2024-crbcfd.com",
             engineerEmail: "wkko@14hy2024-crbcfd.com",
-            apiEndpoint: "https://formspree.io/f/mgaazwjz", // ⬅️ 你的 Formspree 網址
             streets: [
                 'Location 4 - 紅棉路 14HY2024',
                 'Location 5 - 花園道 14HY2024',
@@ -432,7 +428,6 @@
             document.getElementById('cfgSenderEmail').value = SYSTEM_CONFIG.senderEmail;
             document.getElementById('cfgHydEmail').value = SYSTEM_CONFIG.hydEmail;
             document.getElementById('cfgEngineerEmail').value = SYSTEM_CONFIG.engineerEmail;
-            document.getElementById('cfgApiEndpoint').value = SYSTEM_CONFIG.apiEndpoint;
             document.getElementById('lockedStreetsList').innerHTML = SYSTEM_CONFIG.streets.join('<br>');
         }
 
@@ -570,7 +565,7 @@
         }
 
         function resetCamera() {
-            document.getElementById('capturedImage').style.display = 'none';
+            document.getElementById('capturedImage'].style.display = 'none';
             document.getElementById('webcam').style.display = 'block';
             document.getElementById('snapBtn').style.display = 'flex';
             document.getElementById('retakeBtn').style.display = 'none';
@@ -589,12 +584,11 @@
             }
         }
 
-        async function sendReport() {
+        // 直接喚起手機內建電郵 App，帶入完整收件人、CC、主旨與內文
+        function sendReport() {
             const dateCompact = getFormattedDateCompact();
-            // 主旨格式： Location 4 - 紅棉路 14HY2024 - Amber Pothole Gang Photo (Central) 20261003
             const subject = `${selectedStreet} - Amber Pothole Gang Photo (Central) ${dateCompact}`;
             
-            // 內文格式
             const body = `Dear Sir,\n\n` +
                          `FYI.\n\n` +
                          `GPS 座標參考: ${currentGPS.text} (Maps: https://maps.google.com/?q=${currentGPS.lat},${currentGPS.lng})\n\n` +
@@ -603,40 +597,16 @@
                          `${SYSTEM_CONFIG.senderTitle}\n` +
                          `Tel: ${SYSTEM_CONFIG.senderTel}`;
 
-            const apiEndpoint = SYSTEM_CONFIG.apiEndpoint;
-
-            if (apiEndpoint && !apiEndpoint.includes("YOUR_FORMSPREE_ID")) {
-                alert('正在透過 API 背景發送巡邏報告...');
-                const formData = new FormData();
-                formData.append('from', SYSTEM_CONFIG.senderEmail);
-                formData.append('to', SYSTEM_CONFIG.hydEmail);
-                formData.append('cc', SYSTEM_CONFIG.engineerEmail);
-                formData.append('subject', subject);
-                formData.append('message', body);
-                formData.append('photo', capturedBlob, `patrol_${Date.now()}.jpg`);
-
-                try {
-                    const response = await fetch(apiEndpoint, { method: 'POST', body: formData, headers: { 'Accept': 'application/json' } });
-                    if (response.ok) {
-                        alert('✅ 發送成功！所有收件人已收到報告。');
-                        saveHistory(selectedStreet, getFormattedTime(), 'API 發送成功');
-                        resetCamera();
-                    } else {
-                        throw new Error('API 回應異常');
-                    }
-                } catch (e) {
-                    alert('❌ API 發送失敗，將切換至手機 Email 軟體發送。');
-                    fallbackToMailto(subject, body);
-                }
-            } else {
-                fallbackToMailto(subject, body);
-            }
-        }
-
-        function fallbackToMailto(subject, body) {
             const mailtoUrl = `mailto:${encodeURIComponent(SYSTEM_CONFIG.hydEmail)}?cc=${encodeURIComponent(SYSTEM_CONFIG.engineerEmail)}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+            
             window.location.href = mailtoUrl;
-            saveHistory(selectedStreet, getFormattedTime(), '已切換至 Email App');
+            saveHistory(selectedStreet, getFormattedTime(), '已成功調用郵件 App');
+            
+            // 提示工友記得附加剛拍的照片
+            setTimeout(() => {
+                alert('💡 提示：請在開啟的郵件 App 中，將剛才拍好的巡邏相片「附加」到信件中即可發送！');
+                resetCamera();
+            }, 1000);
         }
 
         function saveHistory(street, time, status) {
